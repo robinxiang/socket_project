@@ -26,7 +26,7 @@ func main() {
 		ServerProtocol: "tcp",
 	}
 
-	server_start_msg = fmt.Sprintf("SCRET Socket Server is creating...")
+	server_start_msg = fmt.Sprintln("SCRET Socket Server is creating...")
 	//make serverip:port format string
 	str_ip_port = fmt.Sprintf("%s:%d", this_server.ServerIp, this_server.ServerPort)
 
@@ -41,22 +41,25 @@ func main() {
 
 	//if listen has running
 	fmt.Println(server_start_msg) // print the server start msg
-	fmt.Printf("Server is listen on %s : %d\n", this_server.ServerProtocol, this_server.ServerIp)
+	fmt.Printf("Server is listen on (%s)%s : %d\n", this_server.ServerProtocol, this_server.ServerIp, this_server.ServerPort)
 
 	//create read_buffer,write_buffer
 	read_buffer = make([]byte, 1024)
 	// write_buffer = make([]byte, 1024)
 
 	conn, err = listener.Accept()
-	// defer conn.Close() //when exit close the net.conn
 	// if listener got error
 	if err != nil {
 		fmt.Printf("connection go error! %s\n error quit!", err)
 		os.Exit(0)
 	}
+	defer conn.Close() //when exit close the net.conn
 
 	//read data to the socket buffer
 	read_msg_length, err = conn.Read(read_buffer)
+	if err != nil {
+		fmt.Printf("Read msg error!:\n%s", err)
+	}
 	fmt.Printf("got message(%d):%s", read_msg_length, string(read_buffer))
 
 }
