@@ -1,8 +1,8 @@
 package common
 
 type Server_config struct {
-	ServerName, ServerIpPort, ServerProtocol string
-	ServerPort                               int
+	ServerName, ServerIp, ServerProtocol string
+	ServerPort                           int
 }
 
 func stringToBytes(s ...string) [][]byte {

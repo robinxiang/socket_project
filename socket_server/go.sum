@@ -1,2 +1,4 @@
 github.com/robinxiang/socket_project/common v0.0.0-20231109175126-8c7f4fbcccc8 h1:NOQ1NKBLG14jqSWHqDKAlqhDVy3cjOtTn/vdiWuFA+s=
 github.com/robinxiang/socket_project/common v0.0.0-20231109175126-8c7f4fbcccc8/go.mod h1:L4Pao8nQ03rGRweIjcE+2xGzexQbe0/AC1FJ/ardnrQ=
+github.com/robinxiang/socket_project/common v0.0.0-20231109185224-08b063bafd2a h1:43QTa9NnjL7lfMyT/mZsSN32oaB9hxLa4GOIr9Sck+w=
+github.com/robinxiang/socket_project/common v0.0.0-20231109185224-08b063bafd2a/go.mod h1:L4Pao8nQ03rGRweIjcE+2xGzexQbe0/AC1FJ/ardnrQ=

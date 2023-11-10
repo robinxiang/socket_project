@@ -17,17 +17,21 @@ func main() {
 		// write_buffer []byte
 		conn            net.Conn
 		read_msg_length int //read msg length
+		str_ip_port     string
 	)
 	this_server = common.Server_config{
 		ServerName:     "test server",
-		ServerIpPort:   "127.0.0.1:22",
+		ServerIp:       "127.0.0.1",
+		ServerPort:     1122,
 		ServerProtocol: "tcp",
 	}
 
 	server_start_msg = fmt.Sprintf("SCRET Socket Server is creating...")
+	//make serverip:port format string
+	str_ip_port = fmt.Sprintf("%s:%d", this_server.ServerIp, this_server.ServerPort)
 
 	//create listenner
-	listener, err := net.Listen(this_server.ServerProtocol, this_server.ServerIpPort)
+	listener, err := net.Listen(this_server.ServerProtocol, str_ip_port)
 
 	//if create listener got err
 	if err != nil {
