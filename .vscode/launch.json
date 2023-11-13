@@ -27,6 +27,19 @@
                 "-test.run",
                 "MyTestFunction"
             ]
-        }
+        },
+        {
+            "name": "Remote",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+            "remotePath": "${workspaceFolder}",
+            "port": 4001,
+            "host": "47.109.111.131",
+            "program": "${workspaceFolder}",
+            "env": {},
+            "args": [],
+            "showLog": true
+          }
     ]
 }
