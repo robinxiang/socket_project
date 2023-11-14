@@ -18,30 +18,32 @@ func handleConnectionFunc(conn net.Conn, serverConf common.Server_config) {
 		read_buffer    []byte
 		write_buffer   []byte
 		// conn             net.Conn
-		read_msg_length int //read msg length
 		// str_ip_port      string
 	)
 
-	//create read_buffer,write_buffer
-	read_buffer = make([]byte, 1024)
-	write_buffer = make([]byte, 1024)
-	//send welcome message
-	server_welcome = fmt.Sprintf("Welcome to SECRET socket...:%s\n", this_server.ServerIp)
-	write_buffer = []byte(server_welcome)
-	go func() {
-		_, err := conn.Write(write_buffer)
-		if err != nil {
-			fmt.Printf("Send message error! %s", err)
-			os.Exit(0)
-		}
-	}()
+	for {
+		var read_msg_length int //read msg length
+		//create read_buffer,write_buffer
+		read_buffer = make([]byte, 1024)
+		write_buffer = make([]byte, 1024)
+		//send welcome message
+		server_welcome = fmt.Sprintf("Welcome to SECRET socket...:%s\n", this_server.ServerIp)
+		write_buffer = []byte(server_welcome)
+		go func() {
+			_, err := conn.Write(write_buffer)
+			if err != nil {
+				fmt.Printf("Send message error! %s", err)
+				os.Exit(0)
+			}
+		}()
 
-	//read data to the socket buffer
-	read_msg_length, err := conn.Read(read_buffer)
-	if err != nil {
-		fmt.Printf("Read msg error!:\n%s", err)
+		//read data to the socket buffer
+		read_msg_length, err := conn.Read(read_buffer)
+		if err != nil {
+			fmt.Printf("Read msg error!:\n%s", err)
+		}
+		fmt.Printf("got message(%d):%s", read_msg_length, string(read_buffer))
 	}
-	fmt.Printf("got message(%d):%s", read_msg_length, string(read_buffer))
 }
 
 func main() {
