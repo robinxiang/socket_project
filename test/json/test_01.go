@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// create the json string to Unmarshal
-	str_json_emp := `{"Name":"xiangtao","Age":42,"Partment":"cyberspaceSecurity","Gender":"male"}`
+	str_json_emp := `{"Name":"lisi","Age":42,"Partment":"cyberspaceSecurity","Gender":"male"}`
 
 	fmt.Println("the struct is:", emp_01)
 
