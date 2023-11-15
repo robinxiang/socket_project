@@ -50,12 +50,12 @@ func main() {
 	}
 	for {
 		int_MessageLength, err = conn.Read(byte_RecvDate)
-		if err != nil {
-			fmt.Println("SECRET socket client is read error:", err)
+		if int_MessageLength == 0 {
 			continue
 		}
-		if int_MessageLength == 0 {
-			break
+		if err != nil {
+			fmt.Println("SECRET socket client is read error:", err)
+			return
 		}
 		str_RecvDate = string(byte_RecvDate)
 		fmt.Printf("Received message from server(%s):%d", str_RecvDate, int_MessageLength)
