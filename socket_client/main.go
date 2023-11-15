@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"time"
 
 	common "github.com/robinxiang/socket_project/common"
 )
@@ -39,7 +40,7 @@ func main() {
 	defer conn.Close() //when exit ,close the connection
 
 	//show message connected
-	fmt.Printf("Connected to server:%s port:%d", this_server.ServerIp, this_server.ServerPort)
+	fmt.Printf("Connected to server:%s port:%d \n", this_server.ServerIp, this_server.ServerPort)
 	str_SendDate = "I'm robin"
 	byte_SendDate = []byte(str_SendDate)
 	int_MessageLength, err = conn.Write(byte_SendDate)
@@ -47,9 +48,17 @@ func main() {
 		fmt.Println("SECRET socket client is error:", err)
 		return
 	}
-
-	int_MessageLength, err = conn.Read(byte_RecvDate)
-
-	str_RecvDate = string(byte_RecvDate[:int_MessageLength])
-	fmt.Println("Received message from server:", str_RecvDate)
+	for {
+		int_MessageLength, err = conn.Read(byte_RecvDate)
+		if err != nil {
+			fmt.Println("SECRET socket client is read error:", err)
+			continue
+		}
+		if int_MessageLength == 0 {
+			break
+		}
+		str_RecvDate = string(byte_RecvDate)
+		fmt.Printf("Received message from server(%s):%d", str_RecvDate, int_MessageLength)
+		time.Sleep(time.Second * 1)
+	}
 }

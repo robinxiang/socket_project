@@ -31,7 +31,7 @@ func handleConnectionFunc(conn net.Conn, serverConf common.Server_config) {
 	go func() {
 		_, err := conn.Write(write_buffer)
 		if err != nil {
-			fmt.Printf("Send message error! %s", err)
+			fmt.Printf("Send message error! %s\n", err)
 			os.Exit(0)
 		}
 	}()
@@ -39,9 +39,9 @@ func handleConnectionFunc(conn net.Conn, serverConf common.Server_config) {
 	//read data to the socket buffer
 	read_msg_length, err := conn.Read(read_buffer)
 	if err != nil {
-		fmt.Printf("Read msg error!:\n%s", err)
+		fmt.Printf("Read msg error!:\n%s\n", err)
 	}
-	fmt.Printf("got message(%d):%s", read_msg_length, string(read_buffer))
+	fmt.Printf("got message(%d):%s\n", read_msg_length, string(read_buffer))
 
 }
 
@@ -82,6 +82,7 @@ func main() {
 	for {
 
 		conn, err = listener.Accept()
+
 		// if listener got error
 		if err != nil {
 			fmt.Printf("connection go error! %s\n error quit!", err)
@@ -90,7 +91,6 @@ func main() {
 		// start gorouteine to run handleConnectionFunc
 		go handleConnectionFunc(conn, this_server)
 	}
-
 	defer conn.Close() //when exit close the net.conn
 
 }
