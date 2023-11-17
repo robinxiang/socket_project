@@ -5,6 +5,13 @@ import (
 	"net"
 )
 
+// Clienter info struct
+type Clienter struct {
+	Clienteronn net.Conn
+	Ip          string
+	Name        string
+}
+
 // transform []byte to string list by length rule
 func byte2String(data []byte, int_length int) []string {
 	var str_list []string
@@ -15,7 +22,7 @@ func byte2String(data []byte, int_length int) []string {
 }
 
 // the function to handle the conn
-func handleConn(conn net.Conn) {
+func (Clienter Clienter) handleConn(conn net.Conn) {
 	fmt.Println("New connection")
 	conn.Write([]byte("Hello"))
 	return
@@ -28,7 +35,10 @@ func main() {
 		ServerListener          net.Listener //the server listener,tcp
 		intMsgLength            int
 		strServerWelcome        string
+		map_clienter            map[string]Clienter
+		ChanBroadcast           chan string
 	)
+	// server welcome message
 	strServerWelcome = `
 	bbbbbbbb
 	b::::::b            555555555555555555          tttt           222222222222222
@@ -48,11 +58,17 @@ func main() {
 	 b:::::::::::::::b     55:::::::::55           tt:::::::::::tt2::::::::::::::::::2
 	 bbbbbbbbbbbbbbbb        555555555               ttttttttttt  22222222222222222222	
 	`
-
+	// server config
 	ServerIp = "0.0.0.0"
 	ServerNetwork = "tcp"
 	ServerPort = 2121
 	intMsgLength = 1024
+
+	// Broadcast chanel made
+	ChanBroadcast = make(chan string)
+	//client map
+	map_clienter = make(map[string]Clienter, 10)
+
 	// show start message to server screem
 	fmt.Printf("Socket chat server starting....\n")
 
@@ -71,9 +87,12 @@ func main() {
 			fmt.Println("Error on connection  accept:", err.Error())
 			return
 		}
+		//get remote user net info
+		fmt.Printf("%s incoming\n", conn.RemoteAddr().String())
+		map_clienter[conn.RemoteAddr().String()] = Clienter{conn, conn.RemoteAddr().String(), ""}
+		fmt.Println(map_clienter)
 		conn.Write([]byte(strServerWelcome))
-
-		//handle the conn
-		go handleConn(conn)
+		//handle the client conn
+		go map_clienter[conn.RemoteAddr().String()].handleConn(conn)
 	}
 }
