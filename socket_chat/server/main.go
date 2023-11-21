@@ -25,14 +25,13 @@ func byte2String(data []byte, int_length int) []string {
 
 // the function to handle the conn
 func (Clienter Clienter) handleConn(conn net.Conn) {
-	fmt.Println("USER_ID:%s", Clienter.ClienterId)
+	fmt.Printf("USER_ID:%s\n", Clienter.ClienterId)
 	conn.Write([]byte("Hello"))
 	return
 }
 
-// loop poling to handle the imcoming message from each user and put it in other user struct chan
-func CareBroadcastChan(Broadcast chan string) {
-	//take care message for Broadcast by loop
+// the function to hanle the client read message
+func (Clienter Clienter) handleReadMessage() {
 	for {
 
 	}
@@ -90,6 +89,7 @@ func main() {
 	}
 	fmt.Printf("Server is listen on %s:%d\n", ServerIp, ServerPort)
 	fmt.Println(strServerWelcome, intMsgLength)
+	go CareBroadcastChan(ChanBroadcast, map_clienter)
 	for {
 		// create conn
 		conn, err := ServerListener.Accept()
@@ -102,14 +102,30 @@ func main() {
 			ClienterConn: conn,
 			ClienterId:   conn.RemoteAddr().String(),
 			ClienterIp:   conn.RemoteAddr().String(),
+			chanRead:     make(chan string),
+			chanWrite:    make(chan string),
 		}
 		fmt.Printf("%s incoming\n", conn.RemoteAddr().String())
 		//Add a new user client into maps
 		map_clienter[newClienter.ClienterId] = newClienter
 		//write new user online message to ChanBroadcast
-		ChanBroadcast <- fmt.Sprintf("%s is join server from :%s", newClienter.ClienterName, newClienter.ClienterId)
+		// ChanBroadcast <- fmt.Sprintf("%s is join server from :%s", newClienter.ClienterName, newClienter.ClienterId)
 		conn.Write([]byte(strServerWelcome))
 		//handle the client conn
-		go map_clienter[conn.RemoteAddr().String()].handleConn(conn)
+		go map_clienter[newClienter.ClienterId].handleConn(conn)
+	}
+}
+
+// loop poling to handle the imcoming message from each user and put it in other user struct chan
+func CareBroadcastChan(Broadcast chan string, map_client map[string]Clienter) {
+	//take care message for Broadcast by loop
+	//start goroutein message show
+	fmt.Println("Broadcast message process is start!")
+	for {
+		strMesasge := <-Broadcast
+		for _, user := range map_client {
+			user.chanRead <- strMesasge
+		}
+
 	}
 }
