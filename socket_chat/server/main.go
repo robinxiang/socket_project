@@ -7,9 +7,11 @@ import (
 
 // Clienter info struct
 type Clienter struct {
-	Clienteronn net.Conn
-	Ip          string
-	Name        string
+	ClienterConn        net.Conn
+	ClienterId          string
+	ClienterIp          string
+	ClienterName        string
+	chanRead, chanWrite chan string
 }
 
 // transform []byte to string list by length rule
@@ -23,9 +25,17 @@ func byte2String(data []byte, int_length int) []string {
 
 // the function to handle the conn
 func (Clienter Clienter) handleConn(conn net.Conn) {
-	fmt.Println("New connection")
+	fmt.Println("USER_ID:%s", Clienter.ClienterId)
 	conn.Write([]byte("Hello"))
 	return
+}
+
+// loop poling to handle the imcoming message from each user and put it in other user struct chan
+func CareBroadcastChan(Broadcast chan string) {
+	//take care message for Broadcast by loop
+	for {
+
+	}
 }
 
 func main() {
@@ -88,9 +98,16 @@ func main() {
 			return
 		}
 		//get remote user net info
+		newClienter := Clienter{
+			ClienterConn: conn,
+			ClienterId:   fmt.Sprintf("%s:%d", conn.RemoteAddr().String(), conn.Port().String),
+			ClienterIp:   conn.RemoteAddr().String(),
+		}
 		fmt.Printf("%s incoming\n", conn.RemoteAddr().String())
-		map_clienter[conn.RemoteAddr().String()] = Clienter{conn, conn.RemoteAddr().String(), ""}
-		fmt.Println(map_clienter)
+		//Add a new user client into maps
+		map_clienter[newClienter.ClienterId] = newClienter
+		//write new user online message to ChanBroadcast
+		ChanBroadcast <- fmt.Sprintf("%s is join server from :%s", newClienter.ClienterName, newClienter.ClienterId)
 		conn.Write([]byte(strServerWelcome))
 		//handle the client conn
 		go map_clienter[conn.RemoteAddr().String()].handleConn(conn)
