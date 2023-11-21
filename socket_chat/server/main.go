@@ -100,7 +100,7 @@ func main() {
 		//get remote user net info
 		newClienter := Clienter{
 			ClienterConn: conn,
-			ClienterId:   fmt.Sprintf("%s:%d", conn.RemoteAddr().String(), conn.Port().String),
+			ClienterId:   conn.RemoteAddr().String(),
 			ClienterIp:   conn.RemoteAddr().String(),
 		}
 		fmt.Printf("%s incoming\n", conn.RemoteAddr().String())
