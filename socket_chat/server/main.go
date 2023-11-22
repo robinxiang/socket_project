@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net"
+	"strings"
 )
 
 // Clienter info struct
@@ -12,6 +15,16 @@ type Clienter struct {
 	ClienterIp          string
 	ClienterName        string
 	chanRead, chanWrite chan string
+}
+
+// make the rand ASCII string
+func generateRandomString(length int) string {
+	bytes := make([]byte, length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return ""
+	}
+	return hex.EncodeToString(bytes)
 }
 
 // transform []byte to string list by length rule
@@ -24,14 +37,132 @@ func byte2String(data []byte, int_length int) []string {
 }
 
 // the function to handle the conn
-func (Clienter Clienter) handleConn(conn net.Conn) {
-	fmt.Printf("USER_ID:%s\n", Clienter.ClienterId)
-	conn.Write([]byte("Hello"))
-	return
+func handleConn(conn net.Conn, map_clienter map[string]Clienter, ChanBroadcast chan string) {
+	var (
+		strServerWelcome string
+		strCastMsg       string
+		strSendMsg       string
+		intCmd           int64
+	)
+
+	strServerWelcome = fmt.Sprintf("welcome 2 b5t2!!!\n")
+	strSendMsg = ""
+	newClienter := Clienter{
+		ClienterConn: conn,
+		ClienterId:   conn.RemoteAddr().String(),
+		ClienterIp:   conn.RemoteAddr().String(),
+		ClienterName: generateRandomString(4),
+		chanRead:     make(chan string, 1024),
+		chanWrite:    make(chan string, 1024),
+	}
+	fmt.Printf("%s incoming\n", conn.RemoteAddr().String())
+	//write new user online message to ChanBroadcast
+	strCastMsg = fmt.Sprintf("[%s is join server from :%s]\n", newClienter.ClienterName, newClienter.ClienterId)
+	ChanBroadcast <- strCastMsg
+	//Add a new user client into maps
+	map_clienter[newClienter.ClienterId] = newClienter
+
+	// write welcome message to clients
+	newClienter.chanWrite <- strServerWelcome
+
+	// create gorouteine to send message to client
+	go WriteBackClient(conn, &newClienter)
+	//handle the client conn
+
+	for {
+		strReadData := make([]byte, 1024)
+		int_read_length, err := conn.Read(strReadData)
+		if err != nil {
+			fmt.Printf("read data error:%s\n", err.Error())
+			//write clinet offline message to ChanBroadcast
+			strCastMsg = fmt.Sprintf("[%s is offline from :%s]\n", newClienter.ClienterName, newClienter.ClienterId)
+			ChanBroadcast <- strCastMsg
+			//delete the user client from maps
+			delete(map_clienter, newClienter.ClienterId)
+			return
+		}
+		//fmt.Printf("read data length:%d\n", int_read_length)
+		//fmt.Printf("read data:%s\n", strReadData)
+		strReadData = strReadData[:int_read_length]
+
+		//if strReadData is \r\n or \n then continue
+		if string(strReadData) == "\r\n" || string(strReadData) == "\n" {
+			continue
+		}
+
+		strSendMsg, intCmd = HandleCmdList(&map_clienter, strings.Replace(strings.ToLower(string(strReadData)), "\n", "", -1))
+		if intCmd == 0 {
+			ChanBroadcast <- fmt.Sprintf("[%s]=>%s\n", newClienter.ClienterName, strSendMsg)
+		} else {
+			newClienter.chanWrite <- strSendMsg
+
+		}
+
+	}
+
+}
+
+func HandleCmdList(MapClient *map[string]Clienter, strMsg string) (string, int64) {
+	var strResult string
+	var intCmd int64
+	strResult = ""
+	intCmd = 0
+
+	if strMsg == "who" {
+		strResult = CmdWho(MapClient)
+		intCmd = 1
+	} else if strMsg[:7] == "rename" {
+
+	}
+
+	return strResult, intCmd
+}
+
+// handle the command "rename"
+func CmdRename(Client *Clienter, strMsg string) string {
+	//TODO
+	var strResult string
+
+	Client.ClienterName = strMsg
+	strResult = fmt.Sprintf("Name was changed:%s", strMsg)
+	return strResult
+
+}
+
+// handle the command "cmd"
+func CmdWho(MapClient *map[string]Clienter) string {
+	var str_who string
+	for _, user := range *MapClient {
+		str_who = str_who + fmt.Sprintf("%s\t%s\n", user.ClienterName, user.ClienterId)
+		// str_who = str_who + user.ClienterName + "\n"
+	}
+	return str_who
+
+}
+
+// loop poling to handle the imcoming message from each user and put it in other user struct chan
+func CareBroadcastChan(Broadcast chan string, map_client *map[string]Clienter) {
+	//take care message for Broadcast by loop
+	//start goroutein message show
+	fmt.Println("Broadcast message process is start!")
+	for {
+		strMesasge := <-Broadcast
+		for _, user := range *map_client {
+			user.chanWrite <- strMesasge
+
+		}
+	}
+}
+
+// write back message to client
+func WriteBackClient(con net.Conn, client *Clienter) {
+	for data := range client.chanWrite {
+		_, _ = con.Write([]byte(data))
+	}
 }
 
 // the function to hanle the client read message
-func (Clienter Clienter) handleReadMessage() {
+func (Clienter Clienter) handleReadMessage(conn net.Conn) {
 	for {
 
 	}
@@ -89,7 +220,8 @@ func main() {
 	}
 	fmt.Printf("Server is listen on %s:%d\n", ServerIp, ServerPort)
 	fmt.Println(strServerWelcome, intMsgLength)
-	go CareBroadcastChan(ChanBroadcast, map_clienter)
+	go CareBroadcastChan(ChanBroadcast, &map_clienter)
+
 	for {
 		// create conn
 		conn, err := ServerListener.Accept()
@@ -98,34 +230,7 @@ func main() {
 			return
 		}
 		//get remote user net info
-		newClienter := Clienter{
-			ClienterConn: conn,
-			ClienterId:   conn.RemoteAddr().String(),
-			ClienterIp:   conn.RemoteAddr().String(),
-			chanRead:     make(chan string),
-			chanWrite:    make(chan string),
-		}
-		fmt.Printf("%s incoming\n", conn.RemoteAddr().String())
-		//Add a new user client into maps
-		map_clienter[newClienter.ClienterId] = newClienter
-		//write new user online message to ChanBroadcast
-		// ChanBroadcast <- fmt.Sprintf("%s is join server from :%s", newClienter.ClienterName, newClienter.ClienterId)
-		conn.Write([]byte(strServerWelcome))
-		//handle the client conn
-		go map_clienter[newClienter.ClienterId].handleConn(conn)
-	}
-}
 
-// loop poling to handle the imcoming message from each user and put it in other user struct chan
-func CareBroadcastChan(Broadcast chan string, map_client map[string]Clienter) {
-	//take care message for Broadcast by loop
-	//start goroutein message show
-	fmt.Println("Broadcast message process is start!")
-	for {
-		strMesasge := <-Broadcast
-		for _, user := range map_client {
-			user.chanRead <- strMesasge
-		}
-
+		go handleConn(conn, map_clienter, ChanBroadcast)
 	}
 }
