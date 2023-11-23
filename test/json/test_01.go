@@ -16,10 +16,15 @@ type employee struct {
 	Gender   string
 }
 
+func print_map_employee(mapEmployee map[string]employee) {
+	fmt.Println("the map employee is :", mapEmployee)
+}
+
 func main() {
 	// create the instance
 	var (
 		emp_01, emp_02 employee
+		mapEmployee    map[string]employee
 	)
 
 	emp_01 = employee{
@@ -28,7 +33,18 @@ func main() {
 		Partment: "big data",
 		Gender:   "male",
 	}
+	mapEmployee = make(map[string]employee, 10)
+	mapEmployee[emp_01.Name] = emp_01
 
+	print_map_employee(mapEmployee)
+	new_emp_01 := employee{
+		Name:     "zhangsan_new",
+		Age:      42,
+		Partment: "big data",
+		Gender:   "male",
+	}
+	mapEmployee[emp_01.Name] = new_emp_01
+	print_map_employee(mapEmployee)
 	// create the json string to Unmarshal
 	str_json_emp := `{"Name":"lisi","Age":42,"Partment":"cyberspaceSecurity","Gender":"male"}`
 

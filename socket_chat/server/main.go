@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 )
 
 // Clienter info struct
@@ -43,6 +44,7 @@ func handleConn(conn net.Conn, map_clienter map[string]Clienter, ChanBroadcast c
 		strCastMsg       string
 		strSendMsg       string
 		intCmd           int64
+		ChanQuit         chan bool
 	)
 
 	strServerWelcome = fmt.Sprintf("welcome 2 b5t2!!!\n")
@@ -68,6 +70,9 @@ func handleConn(conn net.Conn, map_clienter map[string]Clienter, ChanBroadcast c
 	// create gorouteine to send message to client
 	go WriteBackClient(conn, &newClienter)
 	//handle the client conn
+	//create quit singla chan
+	ChanQuit = make(chan bool, 1)
+	go QuitSignal(&map_clienter, newClienter, conn, ChanQuit)
 
 	for {
 		strReadData := make([]byte, 1024)
@@ -81,8 +86,6 @@ func handleConn(conn net.Conn, map_clienter map[string]Clienter, ChanBroadcast c
 			delete(map_clienter, newClienter.ClienterId)
 			return
 		}
-		//fmt.Printf("read data length:%d\n", int_read_length)
-		//fmt.Printf("read data:%s\n", strReadData)
 		strReadData = strReadData[:int_read_length]
 
 		//if strReadData is \r\n or \n then continue
@@ -90,9 +93,9 @@ func handleConn(conn net.Conn, map_clienter map[string]Clienter, ChanBroadcast c
 			continue
 		}
 
-		strSendMsg, intCmd = HandleCmdList(&map_clienter, strings.Replace(strings.ToLower(string(strReadData)), "\n", "", -1))
+		strSendMsg, intCmd = HandleCmdList(&map_clienter, strings.Replace(string(strReadData), "\n", "", -1), newClienter.ClienterId, ChanQuit, conn)
 		if intCmd == 0 {
-			ChanBroadcast <- fmt.Sprintf("[%s]=>%s\n", newClienter.ClienterName, strSendMsg)
+			ChanBroadcast <- fmt.Sprintf("[%s]=>%s\n", newClienter.ClienterName, string(strSendMsg))
 		} else {
 			newClienter.chanWrite <- strSendMsg
 
@@ -102,7 +105,7 @@ func handleConn(conn net.Conn, map_clienter map[string]Clienter, ChanBroadcast c
 
 }
 
-func HandleCmdList(MapClient *map[string]Clienter, strMsg string) (string, int64) {
+func HandleCmdList(MapClient *map[string]Clienter, strMsg string, strClientId string, ChanQuit chan bool, conn net.Conn) (string, int64) {
 	var strResult string
 	var intCmd int64
 	strResult = ""
@@ -111,20 +114,32 @@ func HandleCmdList(MapClient *map[string]Clienter, strMsg string) (string, int64
 	if strMsg == "who" {
 		strResult = CmdWho(MapClient)
 		intCmd = 1
-	} else if strMsg[:7] == "rename" {
-
+	} else if (len(strMsg) > 7) && (strMsg[:6] == "rename") {
+		strResult = CmdRename(MapClient, strMsg, strClientId)
+		intCmd = 0
+	} else if len(strMsg) == 4 && (strMsg == "exit") {
+		ChanQuit <- true
+		strResult = fmt.Sprintf("user %s is quit by itself.\n", (*MapClient)[strClientId].ClienterName)
+		intCmd = 0
+	} else {
+		strResult = strMsg
 	}
 
 	return strResult, intCmd
 }
 
 // handle the command "rename"
-func CmdRename(Client *Clienter, strMsg string) string {
-	//TODO
-	var strResult string
-
-	Client.ClienterName = strMsg
-	strResult = fmt.Sprintf("Name was changed:%s", strMsg)
+func CmdRename(MapClient *map[string]Clienter, strMsg string, strClientId string) string {
+	//
+	var (
+		strResult string
+	)
+	strResult = ""
+	//create temp var
+	tmpClient := (*MapClient)[strClientId]
+	tmpClient.ClienterName = strMsg[7:]
+	(*MapClient)[strClientId] = tmpClient
+	strResult = fmt.Sprintf("Name was changed:%s", strMsg[7:])
 	return strResult
 
 }
@@ -149,7 +164,6 @@ func CareBroadcastChan(Broadcast chan string, map_client *map[string]Clienter) {
 		strMesasge := <-Broadcast
 		for _, user := range *map_client {
 			user.chanWrite <- strMesasge
-
 		}
 	}
 }
@@ -161,11 +175,23 @@ func WriteBackClient(con net.Conn, client *Clienter) {
 	}
 }
 
-// the function to hanle the client read message
-func (Clienter Clienter) handleReadMessage(conn net.Conn) {
+// the function to hanle the quit signal
+func QuitSignal(mapClient *map[string]Clienter, Client Clienter, conn net.Conn, quit chan bool) {
 	for {
+		select {
+		case <-quit:
+			fmt.Printf("Client %s is offline\n", Client.ClienterName)
+			conn.Close()
+			return
+		case <-time.After(5 * time.Second):
+			fmt.Printf("Client %s is offline by timeout\n", Client.ClienterName)
+			delete((*mapClient), Client.ClienterId)
+			conn.Close()
+			return
+		}
 
 	}
+
 }
 
 func main() {
@@ -205,7 +231,7 @@ func main() {
 	intMsgLength = 1024
 
 	// Broadcast chanel made
-	ChanBroadcast = make(chan string)
+	ChanBroadcast = make(chan string, 1024)
 	//client map
 	map_clienter = make(map[string]Clienter, 10)
 
