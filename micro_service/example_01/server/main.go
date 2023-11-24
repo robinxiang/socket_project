@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/rpc"
+	"net/rpc/jsonrpc"
 )
 
 type Person struct {
@@ -19,6 +20,8 @@ func (p *Person) Say(LastName string, resp *string) error {
 }
 
 func main() {
+	//prepare the data for test struct
+
 	//show create service info
 	fmt.Println("Starting RPC server....")
 	//regist service to RPC server
@@ -44,6 +47,9 @@ func main() {
 	defer conn.Close()
 
 	//bind rpc server
-	rpc.ServeConn(conn)
+	// rpc.ServeConn(conn)
+
+	// practice JSON RPC server
+	jsonrpc.ServeConn(conn)
 
 }
