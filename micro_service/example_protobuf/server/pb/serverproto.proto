@@ -1,0 +1,24 @@
+syntax="proto3";
+
+package pb;
+
+
+enum Week{
+    Monday=0;
+
+}
+
+// message struct
+message Student{
+    int32 age=1;
+    string name=2;
+    People p=3;
+    repeated int32 score=4;
+}
+
+// import struct
+
+message People{
+    int32 weght=1;
+
+}
