@@ -27,7 +27,8 @@ func main() {
 		log.Fatal("create listener error%s", err)
 	}
 	serverRegister := grpc.NewServer()
-	service := &myInvoicerServer{}
+	// service := &myInvoicerServer{}
+	service := new(myInvoicerServer)
 	invoicer.RegisterInvoicerServer(serverRegister, service)
 	err = serverRegister.Serve(lis)
 	if err != nil {
