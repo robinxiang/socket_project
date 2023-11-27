@@ -2,7 +2,10 @@ module github.com/robinxiang/socket_project/micro_service/example_protobuf/clien
 
 go 1.21.4
 
-require google.golang.org/grpc v1.59.0
+require (
+	github.com/robinxiang/socket_project/micro_service/example_protobuf/server v0.0.0-20231127141505-f53d7f544306
+	google.golang.org/grpc v1.59.0
+)
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect

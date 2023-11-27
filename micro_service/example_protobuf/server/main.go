@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
@@ -13,9 +14,9 @@ type myInvoicerServer struct {
 	invoicer.UnimplementedInvoicerServer
 }
 
-func (s *myInvoicerServer) Create(context.Context, *invoicer.CreateRequest) (*invoicer.CreateResponse, error) {
+func (s *myInvoicerServer) Create(ctx context.Context, req *invoicer.CreateRequest) (*invoicer.CreateResponse, error) {
 	return &invoicer.CreateResponse{
-		Pdf:  []byte("test pdf"),
+		Pdf:  []byte(fmt.Sprintf("test pdf and from %s", req.From)),
 		Docx: []byte("test Docx"),
 	}, nil
 
