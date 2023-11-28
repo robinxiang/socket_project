@@ -1,0 +1,13 @@
+syntax="proto3";
+
+option go_package="github.com/robinxiang/socket_project/micro_service/example_grpc_consul/pb";
+
+message Person{
+    string name=1;
+    int64 age=2;
+}
+
+// create rpc service
+service hello{
+    rpc sayHello(Person) returns (Person);
+}
