@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/robinxiang/socket_project/micro_service/example_grpc_consul/pbsocket_project/micro_service/example_grpc_consul/pb"
+	"github.com/robinxiang/socket_project/micro_service/example_grpc_consul/pb/pb"
+
 	"google.golang.org/grpc"
 )
 
